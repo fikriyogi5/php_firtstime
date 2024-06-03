@@ -12,19 +12,16 @@ In this example:
 7. Session Handling: Manages user sessions securely to maintain login state.
 8. Google reCaptcha.
 -->
+
 <?php
+require_once 'Database.php';
+
 class UserLogin {
     private $pdo;
     private $recaptchaSecret;
 
-    public function __construct($host, $dbname, $username, $password, $recaptchaSecret) {
-        $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ];
-        $this->pdo = new PDO($dsn, $username, $password, $options);
+    public function __construct(Database $database, $recaptchaSecret) {
+        $this->pdo = $database->getConnection();
         $this->recaptchaSecret = $recaptchaSecret;
     }
 
@@ -84,48 +81,4 @@ class UserLogin {
         }
     }
 }
-
-// Usage example
-try {
-    $host = 'your_host';
-    $dbname = 'your_dbname';
-    $username = 'your_username';
-    $password = 'your_password';
-    $recaptchaSecret = 'your_recaptcha_secret'; // Your reCAPTCHA secret key
-
-    $login = new UserLogin($host, $dbname, $username, $password, $recaptchaSecret);
-    session_start();
-    $_SESSION['csrf_token'] = $login->generateToken();
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $csrfToken = $_POST['csrf_token'];
-        $username = $_POST['username'];
-        $password = $_POST['password'];
-        $captchaResponse = $_POST['g-recaptcha-response'];
-        echo $login->login($username, $password, $csrfToken, $captchaResponse);
-    }
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage();
-}
 ?>
-
-<!-- HTML form -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-</head>
-<body>
-    <form method="POST" action="">
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-        <div class="g-recaptcha" data-sitekey="your_recaptcha_site_key"></div> <!-- Your reCAPTCHA site key -->
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html>

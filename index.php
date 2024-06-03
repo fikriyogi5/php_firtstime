@@ -13,37 +13,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-class UserAccess {
-    private $pdo;
-
-    public function __construct($host, $dbname, $username, $password) {
-        $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ];
-        $this->pdo = new PDO($dsn, $username, $password, $options);
-    }
-
-    public function getUserData($userId) {
-        $stmt = $this->pdo->prepare("SELECT username, email FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        return $stmt->fetch();
-    }
-
-    public function generateToken() {
-        return bin2hex(random_bytes(32));
-    }
-}
+require_once 'php/autoload.php';
 
 try {
-    $host = 'your_host';
-    $dbname = 'your_dbname';
-    $username = 'your_username';
-    $password = 'your_password';
-
-    $userAccess = new UserAccess($host, $dbname, $username, $password);
+    $database = new Database();
+    $userAccess = new UserAccess($database);
     $_SESSION['csrf_token'] = $userAccess->generateToken();
     $userData = $userAccess->getUserData($_SESSION['user_id']);
 } catch (Exception $e) {
